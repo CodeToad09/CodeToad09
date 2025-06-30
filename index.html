@@ -1,192 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>3:34 Clock Tool</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>3:34 Interval Clock</title>
   <style>
-    :root {
-      --bg: #1e1e1e;
-      --text: #ffffff;
-      --card: #2c2c2c;
-      --accent: #00c896;
-    }
-
     body {
-      background-color: var(--bg);
-      color: var(--text);
       font-family: Arial, sans-serif;
-      padding: 30px;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 40px;
-    }
-
-    .section {
-      margin-top: 40px;
+      max-width: 480px;
+      margin: 30px auto;
       padding: 20px;
-      background: var(--card);
+      background: #121212;
+      color: #eee;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .box {
+      border: 1px solid #333;
+      padding: 15px;
       border-radius: 10px;
-      display: inline-block;
-      min-width: 300px;
+      margin-bottom: 30px;
+      background-color: #1e1e1e;
     }
-
-    #liveInterval {
-      font-size: 48px;
-      margin: 10px 0;
+    label {
+      font-size: 1rem;
+      display: block;
+      margin-bottom: 6px;
     }
-
-    #liveProgress {
-      font-size: 20px;
-      color: #ccc;
-    }
-
-    input[type="time"], input[type="number"] {
-      font-size: 20px;
-      padding: 8px;
-      margin-top: 10px;
-      background: #444;
-      color: white;
+    input[type="number"], input[type="text"], select {
+      padding: 10px;
+      font-size: 1.1rem;
+      width: 100%;
+      margin-bottom: 10px;
       border: none;
       border-radius: 5px;
+      background: #2a2a2a;
+      color: white;
     }
-
+    select {
+      appearance: none;
+    }
     button {
-      font-size: 20px;
-      padding: 8px 16px;
-      margin-top: 10px;
-      background-color: var(--accent);
-      color: black;
+      background: #4EC9B0;
       border: none;
+      padding: 12px;
+      color: white;
+      font-weight: bold;
+      font-size: 1.1rem;
       border-radius: 5px;
       cursor: pointer;
+      width: 100%;
+      margin-bottom: 15px;
+      transition: background 0.25s ease;
     }
-
-    #convertResult, #reverseResult {
-      font-size: 22px;
-      margin-top: 20px;
+    button:hover {
+      background: #3aa792;
     }
-
-    .toggle {
-      position: absolute;
-      top: 20px;
-      right: 20px;
+    .result {
+      font-size: 1.2rem;
+      color: #9ad4cc;
+      margin-bottom: 5px;
     }
-
-    label {
-      font-size: 14px;
+    .error {
+      color: #f44336;
+    }
+    .live-summary {
+      font-size: 1.2rem;
+      color: #9ad4cc;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .live-summary strong {
+      color: #4EC9B0;
+    }
+    .row {
+      display: flex;
+      gap: 5px;
     }
   </style>
 </head>
 <body>
 
-  <div class="toggle">
-    <label>
-      <input type="checkbox" id="darkToggle" checked>
-      Dark Mode
-    </label>
+<h1>3:34 Interval Clock</h1>
+
+<!-- ✅ Live Interval Info -->
+<div class="box">
+  <div class="live-summary" id="liveSummary">
+    Loading...
   </div>
+</div>
 
-  <h1>🕒 3:34 Clock</h1>
+<!-- ✅ Time ➜ Interval -->
+<div class="box">
+  <label>Total Time → Intervals:</label>
+  <input type="number" id="hoursInput" placeholder="Hours" />
+  <input type="number" id="minutesInput" placeholder="Minutes" />
+  <input type="number" id="secondsInput" placeholder="Seconds" />
+  <button onclick="calculateIntervals()">Calculate Intervals</button>
+  <div class="result" id="intervalResult"></div>
+</div>
 
-  <!-- Live Clock Section -->
-  <div class="section">
-    <h2>Live Clock</h2>
-    <div id="liveInterval">Loading...</div>
-    <div id="liveProgress"></div>
+<!-- ✅ Interval ➜ Time -->
+<div class="box">
+  <label>Intervals → Total Time:</label>
+  <input type="number" id="intervalCountInput" placeholder="Number of intervals" />
+  <button onclick="calculateTime()">Calculate Time</button>
+  <div class="result" id="timeResult"></div>
+</div>
+
+<!-- ✅ Clock Time ➜ Interval -->
+<div class="box">
+  <label>Clock Time → Interval Number (AM/PM):</label>
+  <div class="row">
+    <input type="number" id="clockHourInput" min="1" max="12" placeholder="Hour (1–12)" />
+    <input type="number" id="clockMinuteInput" min="0" max="59" placeholder="Min (0–59)" />
+    <select id="clockAmPmInput">
+      <option>AM</option>
+      <option>PM</option>
+    </select>
   </div>
+  <button onclick="clockTimeToInterval()">Convert</button>
+  <div class="result" id="clockToIntervalResult"></div>
+</div>
 
-  <!-- Time to Interval -->
-  <div class="section">
-    <h2>Convert Time → Interval</h2>
-    <input type="time" id="inputTime" step="1" value="00:00">
-    <br>
-    <button onclick="convertTime()">Convert</button>
-    <div id="convertResult"></div>
-  </div>
+<!-- ✅ Interval ➜ Clock Time -->
+<div class="box">
+  <label>Interval Number → Clock Time (AM/PM):</label>
+  <input type="number" id="intervalToClockInput" placeholder="Interval #" />
+  <button onclick="intervalToClockTime()">Convert</button>
+  <div class="result" id="intervalToClockResult"></div>
+</div>
 
-  <!-- Interval to Time -->
-  <div class="section">
-    <h2>Convert Interval → Time</h2>
-    <input type="number" id="intervalInput" placeholder="Interval #" min="0">
-    <br>
-    <button onclick="reverseConvert()">Convert</button>
-    <div id="reverseResult"></div>
-  </div>
+<script>
+  const INTERVAL_LENGTH = 3 * 60 + 34;
 
-  <script>
-    const INTERVAL_SECONDS = 3 * 60 + 34; // 214 seconds
+  function secondsToTime(sec) {
+    const h = Math.floor(sec / 3600) % 24;
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
 
-    function updateLiveClock() {
-      const now = new Date();
-      const secondsSinceMidnight =
-        now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  function updateLiveSummary() {
+    const now = new Date();
+    const seconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const interval = Math.floor(seconds / INTERVAL_LENGTH);
+    const secondsInto = seconds % INTERVAL_LENGTH;
+    const secondsLeft = INTERVAL_LENGTH - secondsInto;
 
-      const intervalCount = Math.floor(secondsSinceMidnight / INTERVAL_SECONDS);
-      const secondsIntoInterval = secondsSinceMidnight % INTERVAL_SECONDS;
-      const secondsRemaining = INTERVAL_SECONDS - secondsIntoInterval;
+    document.getElementById('liveSummary').innerHTML = `
+      Interval #: <strong>${interval}</strong><br>
+      Seconds into interval: <strong>${secondsInto}</strong><br>
+      Seconds until next: <strong>${secondsLeft}</strong>
+    `;
+  }
 
-      document.getElementById("liveInterval").textContent = `Interval #: ${intervalCount}`;
-      document.getElementById("liveProgress").textContent =
-        `${secondsIntoInterval}s into this interval — ${secondsRemaining}s left`;
+  function calculateIntervals() {
+    const h = parseInt(document.getElementById('hoursInput').value) || 0;
+    const m = parseInt(document.getElementById('minutesInput').value) || 0;
+    const s = parseInt(document.getElementById('secondsInput').value) || 0;
+    const total = h * 3600 + m * 60 + s;
+    const intervals = Math.floor(total / INTERVAL_LENGTH);
+    const leftover = total % INTERVAL_LENGTH;
+
+    document.getElementById('intervalResult').innerHTML =
+      `Intervals: <strong>${intervals}</strong><br>Leftover: <strong>${secondsToTime(leftover)}</strong>`;
+  }
+
+  function calculateTime() {
+    const input = parseInt(document.getElementById('intervalCountInput').value);
+    if (isNaN(input) || input < 0) {
+      document.getElementById('timeResult').innerHTML = `<span class="error">Invalid number.</span>`;
+      return;
     }
 
-    function convertTime() {
-      const input = document.getElementById("inputTime").value;
-      if (!input) {
-        document.getElementById("convertResult").textContent = "Please enter a valid time.";
-        return;
-      }
+    const total = input * INTERVAL_LENGTH;
+    document.getElementById('timeResult').innerHTML = `Total time: <strong>${secondsToTime(total)}</strong>`;
+  }
 
-      let [hours, minutes, seconds] = input.split(":").map(Number);
-      if (seconds === undefined) seconds = 0;
+  function clockTimeToInterval() {
+    const h = parseInt(document.getElementById('clockHourInput').value);
+    const m = parseInt(document.getElementById('clockMinuteInput').value);
+    const ap = document.getElementById('clockAmPmInput').value;
+    const el = document.getElementById('clockToIntervalResult');
 
-      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-      const intervalCount = Math.floor(totalSeconds / INTERVAL_SECONDS);
-      const secondsIntoInterval = totalSeconds % INTERVAL_SECONDS;
-      const secondsRemaining = INTERVAL_SECONDS - secondsIntoInterval;
-
-      document.getElementById("convertResult").textContent =
-        `Interval #: ${intervalCount} — ${secondsIntoInterval}s into interval (${secondsRemaining}s left)`;
+    if (isNaN(h) || h < 1 || h > 12 || isNaN(m) || m < 0 || m > 59) {
+      el.innerHTML = `<span class="error">Enter valid hour and minute.</span>`;
+      return;
     }
 
-    function reverseConvert() {
-      const intervalNum = parseInt(document.getElementById("intervalInput").value);
-      if (isNaN(intervalNum) || intervalNum < 0) {
-        document.getElementById("reverseResult").textContent = "Enter a valid interval number.";
-        return;
-      }
+    let hour24 = h % 12;
+    if (ap === 'PM') hour24 += 12;
 
-      const totalSeconds = intervalNum * INTERVAL_SECONDS;
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
+    const totalSeconds = hour24 * 3600 + m * 60;
+    const interval = Math.floor(totalSeconds / INTERVAL_LENGTH);
 
-      const pad = n => n.toString().padStart(2, '0');
-      const timeStr = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    el.innerHTML = `Interval #: <strong>${interval}</strong>`;
+  }
 
-      document.getElementById("reverseResult").textContent =
-        `Interval #${intervalNum} starts at → ${timeStr}`;
+  function intervalToClockTime() {
+    const input = parseInt(document.getElementById('intervalToClockInput').value);
+    const el = document.getElementById('intervalToClockResult');
+
+    if (isNaN(input) || input < 0) {
+      el.innerHTML = `<span class="error">Invalid interval number.</span>`;
+      return;
     }
 
-    // Dark mode toggle
-    document.getElementById("darkToggle").addEventListener("change", function () {
-      if (this.checked) {
-        document.documentElement.style.setProperty("--bg", "#1e1e1e");
-        document.documentElement.style.setProperty("--text", "#ffffff");
-        document.documentElement.style.setProperty("--card", "#2c2c2c");
-      } else {
-        document.documentElement.style.setProperty("--bg", "#ffffff");
-        document.documentElement.style.setProperty("--text", "#000000");
-        document.documentElement.style.setProperty("--card", "#eeeeee");
-      }
-    });
+    const totalSeconds = input * INTERVAL_LENGTH;
+    let hours = Math.floor(totalSeconds / 3600) % 24;
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = ((hours + 11) % 12) + 1;
 
-    // Start live clock updates
-    updateLiveClock();
-    setInterval(updateLiveClock, 1000);
-  </script>
+    el.innerHTML = `Time: <strong>${hours}:${String(minutes).padStart(2, '0')} ${ampm}</strong>`;
+  }
+
+  updateLiveSummary();
+  setInterval(updateLiveSummary, 1000);
+</script>
 
 </body>
 </html>
